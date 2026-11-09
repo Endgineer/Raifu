@@ -1,0 +1,20 @@
+{
+  "itemGroup.raifu": "Raifu",
+  "item.raifu.heart_container": "Heart Container",
+  "item.raifu.heart_container.tooltip": "Consume to gain one life",
+
+  "raifu.configuration.title": "Raifu Configs",
+  "raifu.configuration.section.raifu.server.toml": "Raifu Server Config",
+  "raifu.configuration.section.raifu.server.toml.title": "Raifu Server Config",
+  "raifu.configuration.section.raifu.client.toml": "Raifu Client Config",
+  "raifu.configuration.section.raifu.client.toml.title": "Raifu Client Config",
+  "raifu.configuration.enabled": "Enable Raifu Hardcore Mechanics",
+  "raifu.configuration.startingLives": "Starting Lives",
+  "raifu.configuration.partyLifePooling": "Pool Party Lives",
+  "raifu.configuration.heartContainerChestChance": "Heart Container Chest Chance",
+  "raifu.configuration.horizontalAnchor": "Lives HUD Horizontal Anchor",
+  "raifu.configuration.verticalAnchor": "Lives HUD Vertical Anchor",
+  "raifu.configuration.xOffset": "Lives HUD X Offset",
+  "raifu.configuration.yOffset": "Lives HUD Y Offset",
+  "raifu.configuration.heartSpacing": "Heart Spacing"
+}
