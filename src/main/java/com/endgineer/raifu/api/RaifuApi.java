@@ -1,7 +1,9 @@
 package com.endgineer.raifu.api;
 
 import com.endgineer.raifu.server.LifeManager;
+import java.util.Set;
 import java.util.UUID;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -18,12 +20,29 @@ public final class RaifuApi {
         return LifeManager.isHardcore(player.server, player.getUUID());
     }
 
-    public static void setHardcore(ServerPlayer player, boolean hardcore) {
-        LifeManager.setHardcore(player.server, player.getUUID(), hardcore);
+    public static Set<ResourceLocation> getHardcoreSources(ServerPlayer player) {
+        return LifeManager.getHardcoreSources(player.server, player.getUUID());
     }
 
-    public static void setHardcore(MinecraftServer server, UUID playerId, boolean hardcore) {
-        LifeManager.setHardcore(server, playerId, hardcore);
+    public static Set<ResourceLocation> getHardcoreSources(MinecraftServer server, UUID playerId) {
+        return LifeManager.getHardcoreSources(server, playerId);
+    }
+
+    public static void setHardcore(
+            ServerPlayer player,
+            ResourceLocation source,
+            boolean hardcore
+    ) {
+        LifeManager.setHardcore(player.server, player.getUUID(), source, hardcore);
+    }
+
+    public static void setHardcore(
+            MinecraftServer server,
+            UUID playerId,
+            ResourceLocation source,
+            boolean hardcore
+    ) {
+        LifeManager.setHardcore(server, playerId, source, hardcore);
     }
 
     public static int getLives(ServerPlayer player) {

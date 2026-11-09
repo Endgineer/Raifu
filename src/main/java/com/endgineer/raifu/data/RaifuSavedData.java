@@ -2,12 +2,17 @@ package com.endgineer.raifu.data;
 
 import com.endgineer.raifu.config.RaifuConfig;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -49,19 +54,6 @@ public final class RaifuSavedData extends SavedData {
         }
     }
 
-    public void clearHardcoreToggles() {
-        boolean changed = false;
-        for (PlayerState state : players.values()) {
-            if (state.hardcore()) {
-                state.setHardcore(false);
-                changed = true;
-            }
-        }
-        if (changed) {
-            setDirty();
-        }
-    }
-
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         ListTag playerList = new ListTag();
@@ -69,7 +61,13 @@ public final class RaifuSavedData extends SavedData {
             CompoundTag playerTag = new CompoundTag();
             playerTag.putUUID("Id", entry.getKey());
             playerTag.putInt("Lives", entry.getValue().lives());
-            playerTag.putBoolean("Hardcore", entry.getValue().hardcore());
+            ListTag hardcoreSources = new ListTag();
+            entry.getValue().hardcoreSources().stream()
+                    .map(ResourceLocation::toString)
+                    .sorted()
+                    .map(StringTag::valueOf)
+                    .forEach(hardcoreSources::add);
+            playerTag.put("HardcoreSources", hardcoreSources);
             playerTag.putBoolean("Eliminated", entry.getValue().eliminated());
             if (entry.getValue().partyId() != null) {
                 playerTag.putUUID("Party", entry.getValue().partyId());
@@ -98,7 +96,13 @@ public final class RaifuSavedData extends SavedData {
                 continue;
             }
             PlayerState state = new PlayerState(Mth.clamp(playerTag.getInt("Lives"), 0, 10));
-            state.setHardcore(playerTag.getBoolean("Hardcore"));
+            ListTag hardcoreSources = playerTag.getList("HardcoreSources", Tag.TAG_STRING);
+            for (int sourceIndex = 0; sourceIndex < hardcoreSources.size(); sourceIndex++) {
+                ResourceLocation source = ResourceLocation.tryParse(hardcoreSources.getString(sourceIndex));
+                if (source != null) {
+                    state.setHardcore(source, true);
+                }
+            }
             state.setEliminated(playerTag.getBoolean("Eliminated"));
             if (playerTag.hasUUID("Party")) {
                 state.setPartyId(playerTag.getUUID("Party"));
@@ -121,7 +125,7 @@ public final class RaifuSavedData extends SavedData {
 
     public static final class PlayerState {
         private int lives;
-        private boolean hardcore;
+        private final Set<ResourceLocation> hardcoreSources = new HashSet<>();
         private boolean eliminated;
         @Nullable
         private UUID partyId;
@@ -139,11 +143,16 @@ public final class RaifuSavedData extends SavedData {
         }
 
         public boolean hardcore() {
-            return hardcore;
+            return !hardcoreSources.isEmpty();
         }
 
-        public void setHardcore(boolean hardcore) {
-            this.hardcore = hardcore;
+        public Set<ResourceLocation> hardcoreSources() {
+            return Set.copyOf(hardcoreSources);
+        }
+
+        public boolean setHardcore(ResourceLocation source, boolean hardcore) {
+            Objects.requireNonNull(source, "source");
+            return hardcore ? hardcoreSources.add(source) : hardcoreSources.remove(source);
         }
 
         public boolean eliminated() {

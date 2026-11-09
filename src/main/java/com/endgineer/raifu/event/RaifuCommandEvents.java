@@ -10,6 +10,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -18,6 +19,8 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 @EventBusSubscriber(modid = Raifu.MOD_ID)
 public final class RaifuCommandEvents {
     private static final int OP_PERMISSION_LEVEL = 2;
+    private static final ResourceLocation HARDCORE_SOURCE =
+            ResourceLocation.fromNamespaceAndPath(Raifu.MOD_ID, "command");
 
     private RaifuCommandEvents() {
     }
@@ -82,12 +85,12 @@ public final class RaifuCommandEvents {
         }
 
         for (ServerPlayer player : players) {
-            RaifuApi.setHardcore(player, enabled);
+            RaifuApi.setHardcore(player, HARDCORE_SOURCE, enabled);
         }
         source.sendSuccess(
                 () -> Component.literal(
-                        "Turned hardcore " + (enabled ? "on" : "off") + " for "
-                                + describePlayers(players) + "."
+                        (enabled ? "Enabled" : "Disabled") + " the " + HARDCORE_SOURCE
+                                + " hardcore source for " + describePlayers(players) + "."
                 ),
                 true
         );

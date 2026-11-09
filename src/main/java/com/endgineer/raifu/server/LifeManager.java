@@ -7,7 +7,9 @@ import com.endgineer.raifu.network.LifeStatePayload;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -40,10 +42,6 @@ public final class LifeManager {
             resolved.data().setPartyLives(resolved.partyId(), clamped);
         }
 
-        if (clamped > 0 && resolved.player().eliminated()) {
-            resolved.player().setEliminated(false);
-            resolved.data().setDirty();
-        }
         syncAll(server, false);
         return clamped;
     }
@@ -56,11 +54,18 @@ public final class LifeManager {
         return RaifuConfig.ENABLED.get() && resolve(server, playerId).player().hardcore();
     }
 
-    public static void setHardcore(MinecraftServer server, UUID playerId, boolean hardcore) {
+    public static Set<ResourceLocation> getHardcoreSources(MinecraftServer server, UUID playerId) {
+        return resolve(server, playerId).player().hardcoreSources();
+    }
+
+    public static void setHardcore(
+            MinecraftServer server,
+            UUID playerId,
+            ResourceLocation source,
+            boolean hardcore
+    ) {
         ResolvedState resolved = resolve(server, playerId);
-        boolean effective = RaifuConfig.ENABLED.get() && hardcore;
-        if (resolved.player().hardcore() != effective) {
-            resolved.player().setHardcore(effective);
+        if (resolved.player().setHardcore(source, hardcore)) {
             resolved.data().setDirty();
         }
         ServerPlayer online = server.getPlayerList().getPlayer(playerId);
@@ -93,7 +98,6 @@ public final class LifeManager {
     public static void reconcileAndSync(MinecraftServer server) {
         if (!RaifuConfig.ENABLED.get()) {
             RaifuSavedData data = RaifuSavedData.get(server);
-            data.clearHardcoreToggles();
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 RaifuSavedData.PlayerState state = data.player(player.getUUID());
                 if (state.eliminated() && player.gameMode.getGameModeForPlayer() == GameType.SPECTATOR) {
@@ -115,8 +119,7 @@ public final class LifeManager {
         if (!RaifuConfig.ENABLED.get()) {
             RaifuSavedData.PlayerState state = RaifuSavedData.get(player.server).player(player.getUUID());
             boolean wasEliminated = state.eliminated();
-            if (state.hardcore() || state.eliminated()) {
-                state.setHardcore(false);
+            if (state.eliminated()) {
                 state.setEliminated(false);
                 RaifuSavedData.get(player.server).setDirty();
             }
@@ -159,10 +162,6 @@ public final class LifeManager {
         int lives = resolved.partyId() == null
                 ? resolved.player().lives()
                 : resolved.data().partyLives(resolved.partyId());
-        if (lives > 0 && resolved.player().eliminated()) {
-            resolved.player().setEliminated(false);
-            resolved.data().setDirty();
-        }
         return new LifeStatePayload(
                 enabled,
                 enabled && resolved.player().hardcore(),
